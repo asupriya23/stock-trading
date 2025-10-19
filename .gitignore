@@ -1,0 +1,57 @@
+# === Global ===
+.DS_Store
+.env
+*.env
+*.log
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+
+# === Python / Backend ===
+backend/__pycache__/
+backend/.venv/
+backend/venv/
+backend/env/
+backend/.env
+backend/*.pyc
+backend/*.pyo
+backend/*.log
+backend/*.sqlite3
+backend/*.db
+
+# Ignore compiled Python files
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# === Node / Frontend ===
+frontend/node_modules/
+frontend/.vite/
+frontend/.cache/
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.eslintcache
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+*.swp
+
+# === OS specific ===
+Thumbs.db
+Desktop.ini
+
+# === Misc ===
+*.bak
+*.tmp
+*.pid
+
+# === Docker / Deployment ===
+*.tar
+*.img
+*.lock

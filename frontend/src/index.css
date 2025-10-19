@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global market-themed background */
+:root {
+  --bg-ink: #0b1220;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg-ink);
+  background-image: theme('backgroundImage.radial'), theme('backgroundImage.grid');
+  background-size: auto, theme('backgroundSize.grid');
+  background-position: center, top left;
+  color: #e5e7eb;
+}
+
+.market-noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: theme('backgroundImage.noise');
+  z-index: 0;
+}
+
+.glass-card {
+  background: rgba(13, 23, 42, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: theme('boxShadow.glass');
+}
+
+.glow {
+  box-shadow: theme('boxShadow.glow');
+}
+
+.kpi {
+  @apply grid grid-cols-2 sm:grid-cols-4 gap-4;
+}
+
+.kpi-card {
+  @apply glass-card rounded-xl p-4 border border-white/10;
+}
+
+.bull { color: theme('colors.market.bull'); }
+.bear { color: theme('colors.market.bear'); }
+.market-primary { color: theme('colors.market.primary'); }
+
+.ticker-track {
+  @apply overflow-hidden whitespace-nowrap relative glass-card border border-white/10 rounded-xl;
+}
+
+.ticker-content {
+  @apply flex items-center gap-8 py-2 animate-ticker;
+}
+
+.chip {
+  @apply px-2 py-1 rounded-full text-xs border border-white/10 bg-white/5;
+}
