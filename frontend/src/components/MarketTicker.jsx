@@ -3,16 +3,16 @@ import React, { useEffect, useState } from 'react';
 import { useWatchlist } from '../contexts/WatchlistContext'; 
 
 const defaultTickers = [
-  { symbol: 'AAPL' },
-  { symbol: 'MSFT' },
-  { symbol: 'NVDA' },
-  { symbol: 'AMZN' },
-  { symbol: 'GOOGL' },
-  { symbol: 'TSLA' },
-  { symbol: 'META' },
-  { symbol: 'AMD' },
-  { symbol: 'NFLX' },
-  { symbol: 'INTC' },
+  // { symbol: 'AAPL' },
+  // { symbol: 'MSFT' },
+  // { symbol: 'NVDA' },
+  // { symbol: 'AMZN' },
+  // { symbol: 'GOOGL' },
+  // { symbol: 'TSLA' },
+  // { symbol: 'META' },
+  // { symbol: 'AMD' },
+  // { symbol: 'NFLX' },
+  // { symbol: 'INTC' },
 ];
 
 const MarketTicker = () => {

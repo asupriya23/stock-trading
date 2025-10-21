@@ -180,7 +180,7 @@ async def get_watchlist(watchlist_id: int, current_user: User = Depends(get_curr
     
     if not watchlist:
         raise HTTPException(
-            status_code=status.HTTP_44_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Watchlist not found"
         )
     

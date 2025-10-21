@@ -170,16 +170,29 @@ const StockDetail = () => {
 
   // --- MODIFICATION: Use the full chartArray state ---
   const getChartData = () => {
-    if (!chartArray) return null; // Use chartArray state
+    // 1. Initial guard clause (this was already good)
+    if (!chartArray || chartArray.length === 0) return null;
+
+    // 2. --- FIX: Clean the array ---
+    // Filter out any items that are null, undefined, or missing a 'date' property
+    const cleanChartArray = chartArray.filter(item => item && item.date);
+
+    // 3. --- FIX: Add a new guard clause ---
+    // If the cleaning process resulted in an empty array, stop
+    if (cleanChartArray.length === 0) return null;
 
     // --- Filter data based on selectedPeriod (Basic Example) ---
-    let filteredData = chartArray;
-    const endDate = new Date(chartArray[chartArray.length - 1].date);
+    
+    // 4. --- FIX: Use the 'cleanChartArray' from now on ---
+    let filteredData = cleanChartArray;
+    
+    // This line is now safe because we know the array isn't empty and has valid items
+    const endDate = new Date(cleanChartArray[cleanChartArray.length - 1].date);
     let startDate = new Date(endDate);
 
     switch (selectedPeriod) {
-      case '1D': // Not really applicable for daily data, show last day?
-        filteredData = chartArray.slice(-1); 
+      case '1D': 
+        filteredData = cleanChartArray.slice(-1); 
         break;
       case '1W':
         startDate.setDate(endDate.getDate() - 7);
@@ -191,17 +204,19 @@ const StockDetail = () => {
         startDate.setMonth(endDate.getMonth() - 3);
         break;
       case '1Y':
-      default: // Default to 1 Year (or all data)
+      default: 
         startDate.setFullYear(endDate.getFullYear() - 1);
         break;
     }
     
-    // Filter the array if not showing all data
+    // 5. --- FIX: Use 'cleanChartArray' for filtering too ---
     if (selectedPeriod !== '1Y') {
-       filteredData = chartArray.filter(item => new Date(item.date) >= startDate);
+       // We filter the already-clean array, so 'item.date' is safe to access
+       filteredData = cleanChartArray.filter(item => new Date(item.date) >= startDate);
     }
     // --- End Period Filtering ---
 
+    // These map functions are now also safe
     const labels = filteredData.map(item => item.date); // Use date from data
     const prices = filteredData.map(item => item.close); // Use close price
 
@@ -213,10 +228,10 @@ const StockDetail = () => {
           data: prices,
           borderColor: 'rgb(59, 130, 246)',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          borderWidth: 1, // Thinner line can look cleaner
+          borderWidth: 1, 
           fill: true,
           tension: 0.1,
-          pointRadius: 0, // Hide points
+          pointRadius: 0, 
         },
       ],
     };

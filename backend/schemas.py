@@ -6,29 +6,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str
-class Stock(BaseModel):
-    id: int
-    ticker: str
-    company_name: Optional[str] = None
-    watchlist_id: int
-    added_at: int
 
-    model_config = ConfigDict(from_attributes=True) # For Pydantic v2
-    # class Config: # For Pydantic v1
-    #     orm_mode = True
-
-# 2. Update your Watchlist schema to include a list of stocks
-class Watchlist(BaseModel):
-    id: int
-    name: str
-    description: Optional[str] = None
-    user_id: int
-    created_at: int
-    stocks: List[Stock] = []  # <--- ADD THIS LINE
-
-    model_config = ConfigDict(from_attributes=True) # For Pydantic v2
-    # class Config: # For Pydantic v1
-    #     orm_mode = True
 class UserCreate(UserBase):
     password: str
 
@@ -38,11 +16,33 @@ class UserLogin(BaseModel):
 
 class UserResponse(UserBase):
     id: int
-    is_active: bool
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+# Stock schemas
+class StockBase(BaseModel):
+    ticker: str
+    company_name: str
+
+class StockCreate(StockBase):
+    pass
+
+class Stock(BaseModel):
+    id: int
+    ticker: str
+    company_name: Optional[str] = None
+    watchlist_id: int
+    added_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class StockResponse(StockBase):
+    id: int
+    watchlist_id: int
+    added_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
 
 # Watchlist schemas
 class WatchlistBase(BaseModel):
@@ -56,31 +56,25 @@ class WatchlistUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
 
+class Watchlist(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    user_id: int
+    created_at: datetime
+    stocks: List[Stock] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
 class WatchlistResponse(WatchlistBase):
     id: int
     user_id: int
     is_primary: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
+    stocks: List[Stock] = []
     
-    class Config:
-        from_attributes = True
-
-# Stock schemas
-class StockBase(BaseModel):
-    ticker: str
-    company_name: str
-
-class StockCreate(StockBase):
-    pass
-
-class StockResponse(StockBase):
-    id: int
-    watchlist_id: int
-    added_at: datetime
-    
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Stock data schemas (for API responses)
 class StockData(BaseModel):
@@ -96,11 +90,11 @@ class StockData(BaseModel):
 class ChartData(BaseModel):
     ticker: str
     period: str
-    data: list[dict]  # List of {timestamp, price} objects
+    data: List[dict]  # List of {timestamp, price} objects
 
 # AI Briefing schemas
 class AIBriefing(BaseModel):
     date: datetime
     watchlist_name: str
-    summary: list[str]  # List of bullet points
-    stocks_analyzed: list[str]  # List of tickers analyzed
+    summary: List[str]  # List of bullet points
+    stocks_analyzed: List[str]  # List of tickers analyzed

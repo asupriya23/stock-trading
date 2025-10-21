@@ -2,16 +2,19 @@
 
 A modern stock watchlist application with AI-powered daily briefings.
 
-## ✅ Recent Updates - Database Integration Complete!
+## ✅ Recent Updates - Backend Fixed & PostgreSQL Integrated!
 
-**🎉 Your watchlist data is now properly stored in the backend database instead of browser localStorage!**
+**🎉 Backend has been completely fixed and integrated with PostgreSQL!**
 
 ### What's Fixed:
-- ✅ **Complete Backend Integration**: All watchlist operations now use the database
+- ✅ **Backend Errors Fixed**: All typos and schema issues resolved
+- ✅ **PostgreSQL Integration**: Production-ready database setup
+- ✅ **Complete Backend Integration**: All watchlist operations use the database
 - ✅ **Real Stock Data**: Fetches actual stock prices from financial APIs
 - ✅ **Persistent Storage**: Your watchlists survive browser refreshes and device changes
 - ✅ **User Authentication**: Secure JWT-based login system
 - ✅ **API Documentation**: Full REST API with interactive docs at `/docs`
+- ✅ **Conda Environment**: Uses da331_spark conda environment for Python dependencies
 
 ## Features
 
@@ -25,11 +28,12 @@ A modern stock watchlist application with AI-powered daily briefings.
 ## Tech Stack
 
 ### Backend
-- **Python** with **FastAPI** framework
-- **SQLite/PostgreSQL** database with **SQLAlchemy** ORM
-- **JWT** authentication with secure password hashing
+- **Python 3.10+** with **FastAPI** framework
+- **PostgreSQL 14** database with **SQLAlchemy** ORM
+- **JWT** authentication with bcrypt password hashing
 - **Pydantic** for data validation
-- **Real-time stock data** from financial APIs
+- **Real-time stock data** from financial APIs (with mock data fallback)
+- **Conda environment**: da331_spark
 
 ### Frontend
 - **React** with **Vite** build tool
@@ -48,13 +52,24 @@ chmod +x start.sh
 
 ### Option 2: Manual Setup (5 minutes)
 
+**Prerequisites:**
+- PostgreSQL 14+ installed and running
+- Conda with da331_spark environment
+
 **Backend:**
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Activate conda environment
+conda activate da331_spark
+
+# Install dependencies
 pip install -r requirements.txt
-cp env.example .env
+
+# Create .env file (already created if you used start.sh)
+# Edit .env to configure your database connection
+
+# Start the server
 python main.py
 ```
 
@@ -63,11 +78,6 @@ python main.py
 cd frontend
 npm install
 npm run dev
-```
-
-**Test the integration:**
-```bash
-python test_backend.py
 ```
 
 🎉 **That's it!** Your app will be running at:
@@ -87,19 +97,21 @@ docker-compose up --build
 Create a `.env` file in the backend directory with the following variables:
 
 ```env
-# Database (SQLite works out of the box, PostgreSQL for production)
-DATABASE_URL=sqlite:///./marketpulse.db
+# Database (PostgreSQL)
+DATABASE_URL=postgresql://username@localhost:5432/marketpulse
 
 # Security
 SECRET_KEY=your-secret-key-change-this-in-production
 ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
 # Optional API Keys (app works without these using mock data)
 FINANCIAL_API_KEY=your-financial-api-key-optional
 OPENAI_API_KEY=your-openai-api-key-optional
 NEWS_API_KEY=your-news-api-key-optional
 ```
+
+**Note**: The `.env` file is automatically created when you run `./start.sh`. Replace `username` with your PostgreSQL username (usually your system username on macOS).
 
 ### API Keys (Optional)
 - **Financial API**: Get a free API key from [Polygon.io](https://polygon.io/) for real stock data
