@@ -91,3 +91,22 @@ class StockDataPoint(Base):
     volume = Column(Integer, nullable=False)
 
     stock = relationship("Stock", back_populates="data_points")
+
+class PriceAlert(Base):
+    __tablename__ = "price_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    stock_ticker = Column(String, nullable=False, index=True)
+    high_price = Column(Float, nullable=True)
+    low_price = Column(Float, nullable=True)
+    email = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    triggered_at = Column(DateTime(timezone=True), nullable=True)
+    triggered_price = Column(Float, nullable=True)
+    trigger_type = Column(String, nullable=True)  # 'high' or 'low'
+
+    # Relationship to user
+    user = relationship("User")

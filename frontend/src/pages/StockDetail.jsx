@@ -6,8 +6,10 @@ import {
   TrendingUp, 
   TrendingDown, 
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Bell
 } from 'lucide-react';
+import PriceAlertModal from '../components/PriceAlertModal';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -45,6 +47,7 @@ const StockDetail = () => {
   const [loading, setLoading] = useState(true);
   const [loadingChart, setLoadingChart] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('1M');
+  const [showPriceAlertModal, setShowPriceAlertModal] = useState(false);
 
   useEffect(() => {
     fetchStockDetails();
@@ -390,19 +393,28 @@ const StockDetail = () => {
           <div className="glass-card rounded-xl border border-white/10 p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                Add/Remove from Watchlist
+              
+              <button 
+                onClick={() => setShowPriceAlertModal(true)}
+                className="w-full bg-white/10 text-white/80 py-2 px-4 rounded-md hover:bg-white/20 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Bell className="h-4 w-4" />
+                <span>Set Price Alert</span>
               </button>
-              <button className="w-full bg-white/10 text-white/80 py-2 px-4 rounded-md hover:bg-white/20 transition-colors">
-                Set Price Alert
-              </button>
-              <button className="w-full bg-white/10 text-white/80 py-2 px-4 rounded-md hover:bg-white/20 transition-colors">
-                View News
-              </button>
+              
             </div>
           </div>
         </div>
       </div>
+
+      {/* Price Alert Modal */}
+      {showPriceAlertModal && (
+        <PriceAlertModal
+          ticker={ticker.toUpperCase()}
+          currentPrice={stockDetails?.current_price}
+          onClose={() => setShowPriceAlertModal(false)}
+        />
+      )}
     </div>
   );
 };

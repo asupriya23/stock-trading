@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import SessionLocal
 from models import Stock, StockDataPoint
+from services.price_alert_service import price_alert_service
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -57,6 +58,14 @@ class StockDataGenerator:
             
             db.commit()
             logger.info(f"Generated data points for {len(stocks)} stocks")
+            
+            # Check price alerts for all updated stocks
+            for stock in stocks:
+                if stock.ticker in self.last_prices:
+                    await price_alert_service.check_price_alerts(
+                        stock.ticker, 
+                        self.last_prices[stock.ticker]
+                    )
             
         except Exception as e:
             logger.error(f"Error generating data: {e}")

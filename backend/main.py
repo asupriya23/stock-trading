@@ -7,14 +7,17 @@ import uvicorn
 import asyncio
 
 from database import get_db, engine, Base
-from models import User, Watchlist, Stock
+from models import User, Watchlist, Stock, PriceAlert
 from schemas import (  # <-- UPDATED IMPORTS
     UserCreate, 
     UserLogin, 
     WatchlistCreate, 
     WatchlistUpdate, 
     StockCreate,
-    Watchlist as WatchlistSchema # <-- IMPORTED Watchlist response schema
+    Watchlist as WatchlistSchema, # <-- IMPORTED Watchlist response schema
+    PriceAlertCreate,
+    PriceAlertUpdate,
+    PriceAlert as PriceAlertSchema
 )
 from auth import create_access_token, verify_token, get_password_hash, verify_password
 from services import stock_service, ai_service
@@ -354,6 +357,151 @@ async def get_ai_briefing(current_user: User = Depends(get_current_user), db: Se
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating AI briefing: {str(e)}"
+        )
+
+# Price Alert endpoints
+@app.post("/api/price-alerts", response_model=PriceAlertSchema)
+async def create_price_alert(
+    alert_data: PriceAlertCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new price alert"""
+    # Validate that at least one price is set
+    if not alert_data.high_price and not alert_data.low_price:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one price threshold (high or low) must be set"
+        )
+    
+    # Validate prices if both are set
+    if alert_data.high_price and alert_data.low_price:
+        if alert_data.high_price <= alert_data.low_price:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="High price must be greater than low price"
+            )
+    
+    try:
+        price_alert = PriceAlert(
+            user_id=current_user.id,
+            stock_ticker=alert_data.stock_ticker.upper(),
+            high_price=alert_data.high_price,
+            low_price=alert_data.low_price,
+            email=alert_data.email
+        )
+        
+        db.add(price_alert)
+        db.commit()
+        db.refresh(price_alert)
+        
+        return price_alert
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating price alert: {str(e)}"
+        )
+
+@app.get("/api/price-alerts", response_model=List[PriceAlertSchema])
+async def get_price_alerts(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all price alerts for the current user"""
+    try:
+        alerts = db.query(PriceAlert).filter(
+            PriceAlert.user_id == current_user.id
+        ).order_by(PriceAlert.created_at.desc()).all()
+        
+        return alerts
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching price alerts: {str(e)}"
+        )
+
+@app.put("/api/price-alerts/{alert_id}", response_model=PriceAlertSchema)
+async def update_price_alert(
+    alert_id: int,
+    alert_data: PriceAlertUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a price alert"""
+    try:
+        price_alert = db.query(PriceAlert).filter(
+            PriceAlert.id == alert_id,
+            PriceAlert.user_id == current_user.id
+        ).first()
+        
+        if not price_alert:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Price alert not found"
+            )
+        
+        # Update fields if provided
+        if alert_data.high_price is not None:
+            price_alert.high_price = alert_data.high_price
+        if alert_data.low_price is not None:
+            price_alert.low_price = alert_data.low_price
+        if alert_data.email is not None:
+            price_alert.email = alert_data.email
+        if alert_data.is_active is not None:
+            price_alert.is_active = alert_data.is_active
+        
+        # Validate prices if both are set
+        if price_alert.high_price and price_alert.low_price:
+            if price_alert.high_price <= price_alert.low_price:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="High price must be greater than low price"
+                )
+        
+        db.commit()
+        db.refresh(price_alert)
+        
+        return price_alert
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating price alert: {str(e)}"
+        )
+
+@app.delete("/api/price-alerts/{alert_id}")
+async def delete_price_alert(
+    alert_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a price alert"""
+    try:
+        price_alert = db.query(PriceAlert).filter(
+            PriceAlert.id == alert_id,
+            PriceAlert.user_id == current_user.id
+        ).first()
+        
+        if not price_alert:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Price alert not found"
+            )
+        
+        db.delete(price_alert)
+        db.commit()
+        
+        return {"message": "Price alert deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting price alert: {str(e)}"
         )
 
 if __name__ == "__main__":

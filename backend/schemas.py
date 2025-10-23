@@ -98,3 +98,30 @@ class AIBriefing(BaseModel):
     watchlist_name: str
     summary: List[str]  # List of bullet points
     stocks_analyzed: List[str]  # List of tickers analyzed
+
+# Price Alert schemas
+class PriceAlertBase(BaseModel):
+    stock_ticker: str
+    high_price: Optional[float] = None
+    low_price: Optional[float] = None
+    email: str
+
+class PriceAlertCreate(PriceAlertBase):
+    pass
+
+class PriceAlertUpdate(BaseModel):
+    high_price: Optional[float] = None
+    low_price: Optional[float] = None
+    email: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class PriceAlert(PriceAlertBase):
+    id: int
+    user_id: int
+    is_active: bool
+    created_at: datetime
+    triggered_at: Optional[datetime] = None
+    triggered_price: Optional[float] = None
+    trigger_type: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
