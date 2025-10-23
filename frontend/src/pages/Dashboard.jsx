@@ -24,7 +24,8 @@ const Dashboard = () => {
     aiBriefing, 
     stockData,
     fetchAiBriefing, 
-    deleteWatchlist 
+    deleteWatchlist,
+    refreshStockData
   } = useWatchlist();
   const { user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -35,6 +36,17 @@ const Dashboard = () => {
       fetchAiBriefing();
     }
   }, [watchlists, aiBriefing, fetchAiBriefing]);
+
+  // Real-time polling: refresh stock data every 3 seconds
+  useEffect(() => {
+    if (watchlists.length === 0) return;
+
+    const interval = setInterval(() => {
+      refreshStockData();
+    }, 3000); // 3 seconds
+
+    return () => clearInterval(interval);
+  }, [watchlists, refreshStockData]);
 
   const handleDeleteWatchlist = async (id) => {
     setDeletingId(id);
@@ -63,6 +75,46 @@ const Dashboard = () => {
     );
   };
 
+  // Calculate portfolio statistics from real stock data
+  const calculatePortfolioStats = () => {
+    const allStocks = watchlists.flatMap(wl => wl.stocks || []);
+    const uniqueTickers = [...new Set(allStocks.map(stock => stock.ticker))];
+    
+    let totalValue = 0;
+    let totalChange = 0;
+    let gainers = 0;
+    let losers = 0;
+    let validStocks = 0;
+
+    uniqueTickers.forEach(ticker => {
+      const data = stockData[ticker];
+      if (data && typeof data.current_price === 'number' && typeof data.change_percent === 'number') {
+        totalValue += data.current_price;
+        totalChange += data.change_percent;
+        validStocks++;
+        
+        if (data.change_percent > 0) gainers++;
+        else if (data.change_percent < 0) losers++;
+      }
+    });
+
+    const avgChangePercent = validStocks > 0 ? (totalChange / validStocks) : 0;
+    const sentiment = avgChangePercent > 0.5 ? 'Bullish' : avgChangePercent < -0.5 ? 'Bearish' : 'Neutral';
+    const volatility = Math.abs(avgChangePercent) > 2 ? 'High' : Math.abs(avgChangePercent) > 1 ? 'Moderate' : 'Low';
+
+    return {
+      totalValue: totalValue.toFixed(2),
+      avgChangePercent: avgChangePercent.toFixed(2),
+      sentiment,
+      volatility,
+      gainers,
+      losers,
+      validStocks
+    };
+  };
+
+  const portfolioStats = calculatePortfolioStats();
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -88,8 +140,18 @@ const Dashboard = () => {
       <div className="kpi mb-8">
         <KPIStat label="Total Watchlists" value={watchlists.length} />
         <KPIStat label="Total Stocks" value={watchlists.reduce((a,w)=>a+(w.stocks?.length||0),0)} />
-        <KPIStat label="Market Sentiment" value="Bullish" delta="+0.8%" positive />
-        <KPIStat label="Volatility" value="Moderate" delta="1.2" positive={false} />
+        <KPIStat 
+          label="Portfolio Sentiment" 
+          value={portfolioStats.sentiment} 
+          delta={`${portfolioStats.avgChangePercent > 0 ? '+' : ''}${portfolioStats.avgChangePercent}%`} 
+          positive={portfolioStats.avgChangePercent >= 0} 
+        />
+        <KPIStat 
+          label="Volatility" 
+          value={portfolioStats.volatility} 
+          delta={`${portfolioStats.gainers}↑ ${portfolioStats.losers}↓`} 
+          positive={portfolioStats.gainers > portfolioStats.losers} 
+        />
       </div>
 
       {/* AI Briefing */}

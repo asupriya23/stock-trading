@@ -214,6 +214,26 @@ export const WatchlistProvider = ({ children }) => {
     }
   };
 
+  // Refresh stock data for all tickers (used for real-time updates)
+  const refreshStockData = async () => {
+    const allStocks = watchlists.flatMap(wl => wl.stocks || []);
+    const uniqueTickers = [...new Set(allStocks.map(stock => stock.ticker))];
+    
+    const newDataCache = {};
+    for (const ticker of uniqueTickers) {
+      try {
+        const stockResponse = await axios.get(`/api/stocks/${ticker}/data`);
+        newDataCache[ticker] = stockResponse.data;
+      } catch (error) {
+        console.warn(`Failed to refresh data for ${ticker}:`, error);
+        // Keep existing data if available
+        newDataCache[ticker] = stockData[ticker] || null;
+      }
+    }
+    
+    setStockData(newDataCache);
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
       fetchWatchlists();
@@ -233,7 +253,8 @@ export const WatchlistProvider = ({ children }) => {
     removeStockFromWatchlist,
     fetchAiBriefing,
     getStockData,
-    getStockChart
+    getStockChart,
+    refreshStockData
   };
 
   return (

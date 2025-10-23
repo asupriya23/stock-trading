@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, joinedload  # <-- IMPORTED joinedload
 from typing import List  # <-- IMPORTED List
 import uvicorn
+import asyncio
 
 from database import get_db, engine, Base
 from models import User, Watchlist, Stock
@@ -17,6 +18,7 @@ from schemas import (  # <-- UPDATED IMPORTS
 )
 from auth import create_access_token, verify_token, get_password_hash, verify_password
 from services import stock_service, ai_service
+from services.data_generator import data_generator
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -45,6 +47,17 @@ app.add_middleware(
 )
 
 security = HTTPBearer()
+
+# Startup and shutdown events for background task
+@app.on_event("startup")
+async def startup_event():
+    """Start the background data generator"""
+    asyncio.create_task(data_generator.start())
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop the background data generator"""
+    await data_generator.stop()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     """Get current authenticated user"""
@@ -263,6 +276,10 @@ async def add_stock_to_watchlist(watchlist_id: int, stock_data: StockCreate, cur
     db.add(stock)
     db.commit()
     db.refresh(stock)
+    
+    # Initialize historical data for the newly added stock
+    await data_generator.initialize_stock_data(stock.id)
+    
     return stock
 
 @app.delete("/api/watchlists/{watchlist_id}/stocks/{stock_id}")
@@ -296,10 +313,10 @@ async def remove_stock_from_watchlist(watchlist_id: int, stock_id: int, current_
     return {"message": "Stock removed from watchlist"}
 
 @app.get("/api/stocks/{ticker}/data")
-async def get_stock_data(ticker: str):
-    """Get current stock data for a ticker"""
+async def get_stock_data(ticker: str, db: Session = Depends(get_db)):
+    """Get current stock data for a ticker from database"""
     try:
-        stock_data = await stock_service.get_stock_data(ticker.upper())
+        stock_data = await stock_service.get_stock_data_from_db(ticker.upper(), db)
         return stock_data
     except Exception as e:
         raise HTTPException(
@@ -308,10 +325,10 @@ async def get_stock_data(ticker: str):
         )
 
 @app.get("/api/stocks/{ticker}/chart")
-async def get_stock_chart(ticker: str, period: str = "1M"):
-    """Get stock chart data for a ticker"""
+async def get_stock_chart(ticker: str, period: str = "1M", db: Session = Depends(get_db)):
+    """Get stock chart data for a ticker from database"""
     try:
-        chart_data = await stock_service.get_stock_chart(ticker.upper(), period)
+        chart_data = await stock_service.get_stock_chart(ticker.upper(), period, db)
         return chart_data
     except Exception as e:
         raise HTTPException(

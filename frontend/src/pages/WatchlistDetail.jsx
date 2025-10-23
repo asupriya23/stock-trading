@@ -20,7 +20,8 @@ const WatchlistDetail = () => {
     watchlists, 
     // 1. GET THE GLOBAL stockData CACHE FROM CONTEXT
     stockData: globalStockData, 
-    removeStockFromWatchlist 
+    removeStockFromWatchlist,
+    refreshStockData
   } = useWatchlist(); 
   
   const [watchlist, setWatchlist] = useState(null);
@@ -37,6 +38,17 @@ const WatchlistDetail = () => {
     // Only set loading to false *after* finding the watchlist
     setLoading(false); 
   }, [watchlists, id]);
+
+  // Real-time polling: refresh stock data every 3 seconds
+  useEffect(() => {
+    if (!watchlist || !watchlist.stocks || watchlist.stocks.length === 0) return;
+
+    const interval = setInterval(() => {
+      refreshStockData();
+    }, 3000); // 3 seconds
+
+    return () => clearInterval(interval);
+  }, [watchlist, refreshStockData]);
 
   // 3. REMOVE useEffect THAT FETCHED DATA LOCALLY - Context already handles it
   // useEffect(() => {

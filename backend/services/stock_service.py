@@ -3,6 +3,8 @@ import os
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
 
 load_dotenv()
 
@@ -45,12 +47,24 @@ class StockService:
             # Return mock data if API fails
             return self._get_mock_stock_data(ticker)
     
-    async def get_stock_chart(self, ticker: str, period: str = "1M") -> Dict:
-        """Get stock chart data for a ticker"""
+    async def get_stock_chart(self, ticker: str, period: str = "1M", db: Session = None) -> Dict:
+        """Get stock chart data for a ticker from database"""
+        if db is None:
+            # Fallback to mock data if no database session provided
+            return self._get_mock_chart_data(ticker, period)
+        
         try:
+            from models import Stock, StockDataPoint
+            
+            # Find the stock in database
+            stock = db.query(Stock).filter(Stock.ticker == ticker.upper()).first()
+            
+            if not stock:
+                # Stock not found in database, return mock data
+                return self._get_mock_chart_data(ticker, period)
+            
             # Map period to days
             period_days = {
-                "1D": 1,
                 "1W": 7,
                 "1M": 30,
                 "3M": 90,
@@ -58,29 +72,31 @@ class StockService:
             }
             
             days = period_days.get(period, 30)
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=days)
             
-            url = f"{self.base_url}/aggs/ticker/{ticker}/range/1/day/{start_date.strftime('%Y-%m-%d')}/{end_date.strftime('%Y-%m-%d')}"
-            params = {
-                "apikey": self.api_key,
-                "adjusted": "true",
-                "sort": "asc"
-            }
+            # Get the last N data points
+            data_points = db.query(StockDataPoint)\
+                .filter(StockDataPoint.stock_id == stock.id)\
+                .order_by(desc(StockDataPoint.date))\
+                .limit(days)\
+                .all()
             
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
-            
-            if data.get("status") != "OK" or not data.get("results"):
+            if not data_points:
+                # No data points found, return mock data
                 return self._get_mock_chart_data(ticker, period)
             
+            # Reverse to get chronological order (oldest to newest)
+            data_points.reverse()
+            
+            # Format data for chart
             chart_data = []
-            for result in data["results"]:
+            for point in data_points:
                 chart_data.append({
-                    "timestamp": result["t"],  # Unix timestamp
-                    "price": result["c"],  # Close price
-                    "volume": result["v"]
+                    "timestamp": int(point.date.timestamp() * 1000),  # Convert to milliseconds
+                    "price": point.close,
+                    "volume": point.volume,
+                    "open": point.open,
+                    "high": point.high,
+                    "low": point.low
                 })
             
             return {
@@ -90,7 +106,56 @@ class StockService:
             }
             
         except Exception as e:
+            print(f"Error fetching chart data from database: {e}")
             return self._get_mock_chart_data(ticker, period)
+    
+    async def get_stock_data_from_db(self, ticker: str, db: Session) -> Dict:
+        """Get current stock data from database"""
+        try:
+            from models import Stock, StockDataPoint
+            
+            # Find the stock in database
+            stock = db.query(Stock).filter(Stock.ticker == ticker.upper()).first()
+            
+            if not stock:
+                return self._get_mock_stock_data(ticker)
+            
+            # Get the latest data point
+            latest_point = db.query(StockDataPoint)\
+                .filter(StockDataPoint.stock_id == stock.id)\
+                .order_by(desc(StockDataPoint.date))\
+                .first()
+            
+            if not latest_point:
+                return self._get_mock_stock_data(ticker)
+            
+            # Get the previous data point for change calculation
+            previous_point = db.query(StockDataPoint)\
+                .filter(StockDataPoint.stock_id == stock.id)\
+                .order_by(desc(StockDataPoint.date))\
+                .offset(1)\
+                .first()
+            
+            if previous_point:
+                change = latest_point.close - previous_point.close
+                change_percent = (change / previous_point.close) * 100
+            else:
+                change = 0
+                change_percent = 0
+            
+            return {
+                "ticker": ticker.upper(),
+                "company_name": self._get_company_name(ticker),
+                "current_price": round(latest_point.close, 2),
+                "change": round(change, 2),
+                "change_percent": round(change_percent, 2),
+                "volume": latest_point.volume,
+                "last_updated": latest_point.date
+            }
+            
+        except Exception as e:
+            print(f"Error fetching stock data from database: {e}")
+            return self._get_mock_stock_data(ticker)
     
     def _get_mock_stock_data(self, ticker: str) -> Dict:
         """Generate mock stock data for demo purposes"""
@@ -115,7 +180,7 @@ class StockService:
         import random
         from datetime import datetime, timedelta
         
-        days = {"1D": 1, "1W": 7, "1M": 30, "3M": 90, "1Y": 365}.get(period, 30)
+        days = {"1W": 7, "1M": 30, "3M": 90, "1Y": 365}.get(period, 30)
         base_price = random.uniform(50, 500)
         
         chart_data = []
