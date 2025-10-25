@@ -125,3 +125,65 @@ class PriceAlert(PriceAlertBase):
     trigger_type: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
+
+# Paper Trading Schemas
+class PaperAccountBase(BaseModel):
+    virtual_cash_balance: float = 100000.0
+
+class PaperAccountCreate(PaperAccountBase):
+    pass
+
+class PaperAccount(PaperAccountBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class PaperPositionBase(BaseModel):
+    stock_ticker: str
+    quantity: int
+    average_buy_price: float
+
+class PaperPositionCreate(PaperPositionBase):
+    pass
+
+class PaperPosition(PaperPositionBase):
+    id: int
+    account_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class PaperTradeBase(BaseModel):
+    stock_ticker: str
+    trade_type: str  # 'buy' or 'sell'
+    quantity: int
+    price: float
+    total_amount: float
+
+class PaperTradeCreate(PaperTradeBase):
+    pass
+
+class PaperTrade(PaperTradeBase):
+    id: int
+    account_id: int
+    created_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class PaperOrderRequest(BaseModel):
+    stock_ticker: str
+    quantity: int
+    order_type: str = "market"  # 'market' or 'limit'
+    limit_price: Optional[float] = None
+
+class PaperPortfolioSummary(BaseModel):
+    total_value: float
+    cash_balance: float
+    positions_value: float
+    total_pnl: float
+    total_pnl_percent: float
+    positions: List[PaperPosition] = []

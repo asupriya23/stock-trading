@@ -7,7 +7,7 @@ import uvicorn
 import asyncio
 
 from database import get_db, engine, Base
-from models import User, Watchlist, Stock, PriceAlert
+from models import User, Watchlist, Stock, PriceAlert, PaperAccount, PaperPosition, PaperTrade
 from schemas import (  # <-- UPDATED IMPORTS
     UserCreate, 
     UserLogin, 
@@ -17,11 +17,15 @@ from schemas import (  # <-- UPDATED IMPORTS
     Watchlist as WatchlistSchema, # <-- IMPORTED Watchlist response schema
     PriceAlertCreate,
     PriceAlertUpdate,
-    PriceAlert as PriceAlertSchema
+    PriceAlert as PriceAlertSchema,
+    PaperOrderRequest,
+    PaperPortfolioSummary,
+    PaperTrade as PaperTradeSchema
 )
 from auth import create_access_token, verify_token, get_password_hash, verify_password
 from services import stock_service, ai_service
 from services.data_generator import data_generator
+from services.paper_trading_service import paper_trading_service
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -502,6 +506,106 @@ async def delete_price_alert(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting price alert: {str(e)}"
+        )
+
+# Paper Trading Endpoints
+@app.get("/api/v1/paper/portfolio")
+async def get_paper_portfolio(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get paper trading portfolio summary"""
+    try:
+        portfolio = await paper_trading_service.get_portfolio_summary(current_user.id, db)
+        return portfolio
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching portfolio: {str(e)}"
+        )
+
+@app.post("/api/v1/paper/buy")
+async def execute_paper_buy_order(
+    order: PaperOrderRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Execute a paper trading buy order"""
+    try:
+        result = await paper_trading_service.execute_buy_order(current_user.id, order, db)
+        if not result["success"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["message"]
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error executing buy order: {str(e)}"
+        )
+
+@app.post("/api/v1/paper/sell")
+async def execute_paper_sell_order(
+    order: PaperOrderRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Execute a paper trading sell order"""
+    try:
+        result = await paper_trading_service.execute_sell_order(current_user.id, order, db)
+        if not result["success"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["message"]
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error executing sell order: {str(e)}"
+        )
+
+@app.get("/api/v1/paper/trades")
+async def get_paper_trade_history(
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get paper trading trade history"""
+    try:
+        trades = await paper_trading_service.get_trade_history(current_user.id, db, limit)
+        return {"trades": trades}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching trade history: {str(e)}"
+        )
+
+@app.post("/api/v1/paper/reset")
+async def reset_paper_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Reset paper trading account to initial state"""
+    try:
+        result = await paper_trading_service.reset_paper_account(current_user.id, db)
+        if not result["success"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["message"]
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error resetting account: {str(e)}"
         )
 
 if __name__ == "__main__":

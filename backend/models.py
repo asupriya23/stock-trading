@@ -110,3 +110,52 @@ class PriceAlert(Base):
 
     # Relationship to user
     user = relationship("User")
+
+# Paper Trading Models
+class PaperAccount(Base):
+    __tablename__ = "paper_accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    virtual_cash_balance = Column(Float, default=100000.0)  # Starting with $100,000
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    positions = relationship("PaperPosition", back_populates="account", cascade="all, delete-orphan")
+    trades = relationship("PaperTrade", back_populates="account", cascade="all, delete-orphan")
+
+class PaperPosition(Base):
+    __tablename__ = "paper_positions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("paper_accounts.id"), nullable=False)
+    stock_ticker = Column(String, nullable=False, index=True)
+    quantity = Column(Integer, nullable=False)  # Number of shares
+    average_buy_price = Column(Float, nullable=False)  # Average price paid per share
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    account = relationship("PaperAccount", back_populates="positions")
+
+    # Ensure unique ticker per account
+    __table_args__ = (
+        UniqueConstraint('account_id', 'stock_ticker', name='_account_ticker_uc'),
+    )
+
+class PaperTrade(Base):
+    __tablename__ = "paper_trades"
+
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("paper_accounts.id"), nullable=False)
+    stock_ticker = Column(String, nullable=False, index=True)
+    trade_type = Column(String, nullable=False)  # 'buy' or 'sell'
+    quantity = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)  # Price per share
+    total_amount = Column(Float, nullable=False)  # quantity * price
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    account = relationship("PaperAccount", back_populates="trades")

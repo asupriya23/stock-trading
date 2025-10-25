@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WatchlistProvider } from './contexts/WatchlistContext';
+import { PaperTradingProvider, usePaperTrading } from './contexts/PaperTradingContext';
 import StockChart from './components/StockChart';
 import { useWatchlist } from './contexts/WatchlistContext';
 import Navbar from './components/Navbar';
@@ -10,6 +11,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import WatchlistDetail from './pages/WatchlistDetail';
 import StockDetail from './pages/StockDetail';
+import PaperTradingDashboard from './pages/PaperTradingDashboard';
+import SimulationBanner from './components/SimulationBanner';
 import './App.css';
 
 // Protected Route component
@@ -42,60 +45,93 @@ const PublicRoute = ({ children }) => {
   return user ? <Navigate to="/dashboard" /> : children;
 };
 
+// Simulation Banner Wrapper
+const SimulationBannerWrapper = () => {
+  const { isPaperMode, togglePaperMode } = usePaperTrading();
+  const [showBanner, setShowBanner] = React.useState(false);
+
+  React.useEffect(() => {
+    setShowBanner(isPaperMode);
+  }, [isPaperMode]);
+
+  const handleClose = () => {
+    setShowBanner(false);
+    togglePaperMode();
+  };
+
+  return (
+    <SimulationBanner 
+      isVisible={showBanner} 
+      onClose={handleClose}
+    />
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
       <WatchlistProvider>
-        <Router>
-          <div className="min-h-screen">
-            <Navbar />
-            <main>
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" />} />
-                <Route 
-                  path="/login" 
-                  element={
-                    <PublicRoute>
-                      <Login />
-                    </PublicRoute>
-                  } 
-                />
-                <Route 
-                  path="/register" 
-                  element={
-                    <PublicRoute>
-                      <Register />
-                    </PublicRoute>
-                  } 
-                />
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/watchlist/:id" 
-                  element={
-                    <ProtectedRoute>
-                      <WatchlistDetail />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/stock/:ticker" 
-                  element={
-                    <ProtectedRoute>
-                      <StockDetail />
-                    </ProtectedRoute>
-                  } 
-                />
-              </Routes>
-            </main>
-          </div>
-        </Router>
+        <PaperTradingProvider>
+          <Router>
+            <div className="min-h-screen">
+              <SimulationBannerWrapper />
+              <Navbar />
+              <main>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" />} />
+                  <Route 
+                    path="/login" 
+                    element={
+                      <PublicRoute>
+                        <Login />
+                      </PublicRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/register" 
+                    element={
+                      <PublicRoute>
+                        <Register />
+                      </PublicRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/paper-trading" 
+                    element={
+                      <ProtectedRoute>
+                        <PaperTradingDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/watchlist/:id" 
+                    element={
+                      <ProtectedRoute>
+                        <WatchlistDetail />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/stock/:ticker" 
+                    element={
+                      <ProtectedRoute>
+                        <StockDetail />
+                      </ProtectedRoute>
+                    } 
+                  />
+                </Routes>
+              </main>
+            </div>
+          </Router>
+        </PaperTradingProvider>
       </WatchlistProvider>
     </AuthProvider>
   );

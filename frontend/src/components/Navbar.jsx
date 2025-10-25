@@ -1,12 +1,14 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { BarChart3, User, LogOut, Menu, X } from 'lucide-react';
+import { usePaperTrading } from '../contexts/PaperTradingContext';
+import { BarChart3, User, LogOut, Menu, X, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import MarketTicker from './MarketTicker';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { isPaperMode, togglePaperMode } = usePaperTrading();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -34,6 +36,23 @@ const Navbar = () => {
               >
                 Dashboard
               </Link>
+              <Link
+                to="/paper-trading"
+                className="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>Paper Trading</span>
+              </Link>
+              <button
+                onClick={togglePaperMode}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isPaperMode 
+                    ? 'bg-yellow-500 text-black hover:bg-yellow-600' 
+                    : 'text-white/80 hover:text-white'
+                }`}
+              >
+                {isPaperMode ? 'Exit Simulation' : 'Enter Simulation'}
+              </button>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <User className="h-5 w-5 text-white/60" />
@@ -84,6 +103,27 @@ const Navbar = () => {
               >
                 Dashboard
               </Link>
+              <Link
+                to="/paper-trading"
+                className="text-white/80 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center space-x-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>Paper Trading</span>
+              </Link>
+              <button
+                onClick={() => {
+                  togglePaperMode();
+                  setIsMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isPaperMode 
+                    ? 'bg-yellow-500 text-black hover:bg-yellow-600' 
+                    : 'text-white/80 hover:text-white'
+                }`}
+              >
+                {isPaperMode ? 'Exit Simulation' : 'Enter Simulation'}
+              </button>
               <div className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center space-x-2">
                   <User className="h-5 w-5 text-white/60" />
