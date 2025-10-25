@@ -11,8 +11,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import WatchlistDetail from './pages/WatchlistDetail';
 import StockDetail from './pages/StockDetail';
-import PaperTradingDashboard from './pages/PaperTradingDashboard';
 import SimulationBanner from './components/SimulationBanner';
+//import PaperTradingDashboard from './pages/PaperTradingDashboard';
+import SimulationDashboard from './pages/SimulationDashboard'; // Renamed
 import './App.css';
 
 // Protected Route component
@@ -103,14 +104,16 @@ function App() {
                       </ProtectedRoute>
                     } 
                   />
-                  <Route 
+                  {/* <Route 
                     path="/paper-trading" 
                     element={
                       <ProtectedRoute>
                         <PaperTradingDashboard />
                       </ProtectedRoute>
                     } 
-                  />
+                  /> */}
+                  <Route path="/simulation" element={<ProtectedRoute><SimulationDashboard /></ProtectedRoute>} />
+
                   <Route 
                     path="/watchlist/:id" 
                     element={

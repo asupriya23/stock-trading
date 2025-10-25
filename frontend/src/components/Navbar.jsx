@@ -16,6 +16,17 @@ const Navbar = () => {
     logout();
     navigate('/login');
   };
+  const handleToggleSimulation = () => {
+    // If we are currently in paper mode, exit to dashboard
+    if (isPaperMode) {
+      navigate('/dashboard');
+    } else {
+      // Otherwise, enter the simulation page
+      navigate('/simulation');
+    }
+    // Toggle the state
+    togglePaperMode();
+  };
 
   return (
     <nav className="bg-transparent">
@@ -36,15 +47,15 @@ const Navbar = () => {
               >
                 Dashboard
               </Link>
-              <Link
+              {/* <Link
                 to="/paper-trading"
                 className="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
               >
                 <TrendingUp className="h-4 w-4" />
                 <span>Paper Trading</span>
-              </Link>
+              </Link> */}
               <button
-                onClick={togglePaperMode}
+                onClick={handleToggleSimulation}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isPaperMode 
                     ? 'bg-yellow-500 text-black hover:bg-yellow-600' 
@@ -103,17 +114,17 @@ const Navbar = () => {
               >
                 Dashboard
               </Link>
-              <Link
+              {/* <Link
                 to="/paper-trading"
                 className="text-white/80 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center space-x-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <TrendingUp className="h-4 w-4" />
                 <span>Paper Trading</span>
-              </Link>
+              </Link> */}
               <button
                 onClick={() => {
-                  togglePaperMode();
+                  handleToggleSimulation();
                   setIsMenuOpen(false);
                 }}
                 className={`w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${

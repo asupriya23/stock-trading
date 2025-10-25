@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { usePaperTrading } from '../contexts/PaperTradingContext';
 import PortfolioSummary from '../components/PortfolioSummary';
 import TradeHistory from '../components/TradeHistory';
-import PaperTradingForm from '../components/PaperTradingForm';
+import SimulationForm from '../components/SimulationForm';
 
-const PaperTradingDashboard = () => {
+const SimulationDashboard = () => {
   const { resetAccount } = usePaperTrading();
   const [selectedStock, setSelectedStock] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -91,7 +91,7 @@ const PaperTradingDashboard = () => {
               </div>
 
               {selectedStock && (
-                <PaperTradingForm
+                <SimulationForm
                   stockTicker={selectedStock}
                   onOrderExecuted={handleOrderExecuted}
                 />
@@ -150,4 +150,4 @@ const PaperTradingDashboard = () => {
   );
 };
 
-export default PaperTradingDashboard;
+export default SimulationDashboard;

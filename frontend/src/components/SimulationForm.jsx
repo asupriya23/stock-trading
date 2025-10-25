@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePaperTrading } from '../contexts/PaperTradingContext';
 
-const PaperTradingForm = ({ stockTicker, onOrderExecuted }) => {
+const SimulationForm = ({ stockTicker, onOrderExecuted }) => {
   const { executeBuyOrder, executeSellOrder, getCurrentPrice, portfolio } = usePaperTrading();
   const [orderType, setOrderType] = useState('buy');
   const [quantity, setQuantity] = useState(1);
@@ -229,4 +229,4 @@ const PaperTradingForm = ({ stockTicker, onOrderExecuted }) => {
   );
 };
 
-export default PaperTradingForm;
+export default SimulationForm;
