@@ -1,31 +1,34 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate ,useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { usePaperTrading } from '../contexts/PaperTradingContext';
+// import { usePaperTrading } from '../contexts/PaperTradingContext'; // REMOVED
 import { BarChart3, User, LogOut, Menu, X, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import MarketTicker from './MarketTicker';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const { isPaperMode, togglePaperMode } = usePaperTrading();
+  // const { isPaperMode, togglePaperMode } = usePaperTrading(); // REMOVED
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const isOnSimulationPage = location.pathname === '/simulation'; // This is correct
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-  const handleToggleSimulation = () => {
-    // If we are currently in paper mode, exit to dashboard
-    if (isPaperMode) {
+
+  // RENAMED and SIMPLIFIED this function
+  const handleSimButtonClick = () => {
+    // If we are on the simulation page, exit to dashboard
+    if (isOnSimulationPage) {
       navigate('/dashboard');
     } else {
       // Otherwise, enter the simulation page
       navigate('/simulation');
     }
-    // Toggle the state
-    togglePaperMode();
+    // No longer need to toggle state
   };
 
   return (
@@ -47,22 +50,16 @@ const Navbar = () => {
               >
                 Dashboard
               </Link>
-              {/* <Link
-                to="/paper-trading"
-                className="text-white/80 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
-              >
-                <TrendingUp className="h-4 w-4" />
-                <span>Paper Trading</span>
-              </Link> */}
+              {/* Paper Trading Link is already commented out, which is correct */}
               <button
-                onClick={handleToggleSimulation}
+                onClick={handleSimButtonClick} // UPDATED
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isPaperMode 
+                  isOnSimulationPage // UPDATED
                     ? 'bg-yellow-500 text-black hover:bg-yellow-600' 
                     : 'text-white/80 hover:text-white'
                 }`}
               >
-                {isPaperMode ? 'Exit Simulation' : 'Enter Simulation'}
+                {isOnSimulationPage ? 'Exit Simulation' : 'Enter Simulation'} {/* UPDATED */}
               </button>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
@@ -114,26 +111,19 @@ const Navbar = () => {
               >
                 Dashboard
               </Link>
-              {/* <Link
-                to="/paper-trading"
-                className="text-white/80 hover:text-white block px-3 py-2 rounded-md text-base font-medium flex items-center space-x-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <TrendingUp className="h-4 w-4" />
-                <span>Paper Trading</span>
-              </Link> */}
+              {/* Paper Trading Link is already commented out, which is correct */}
               <button
                 onClick={() => {
-                  handleToggleSimulation();
+                  handleSimButtonClick(); // UPDATED
                   setIsMenuOpen(false);
                 }}
                 className={`w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isPaperMode 
+                  isOnSimulationPage // UPDATED
                     ? 'bg-yellow-500 text-black hover:bg-yellow-600' 
                     : 'text-white/80 hover:text-white'
                 }`}
               >
-                {isPaperMode ? 'Exit Simulation' : 'Enter Simulation'}
+                {isOnSimulationPage ? 'Exit Simulation' : 'Enter Simulation'} {/* UPDATED */}
               </button>
               <div className="flex items-center justify-between px-3 py-2">
                 <div className="flex items-center space-x-2">

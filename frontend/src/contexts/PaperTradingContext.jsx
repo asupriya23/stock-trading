@@ -16,7 +16,7 @@ export const PaperTradingProvider = ({ children }) => {
   const [portfolio, setPortfolio] = useState(null);
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isPaperMode, setIsPaperMode] = useState(false);
+  // const [isPaperMode, setIsPaperMode] = useState(false); // REMOVED
   const { user, loading: authLoading } = useAuth();
 
   // Fetch portfolio summary
@@ -126,9 +126,9 @@ export const PaperTradingProvider = ({ children }) => {
   };
 
   // Toggle paper trading mode
-  const togglePaperMode = () => {
-    setIsPaperMode(!isPaperMode);
-  };
+  // const togglePaperMode = () => { // REMOVED
+  //   setIsPaperMode(!isPaperMode);
+  // };
 
   // Get current stock price for a ticker
   const getCurrentPrice = async (ticker) => {
@@ -165,36 +165,38 @@ export const PaperTradingProvider = ({ children }) => {
     return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
   };
 
-  // Auto-refresh portfolio data every 30 seconds when in paper mode
+  // Auto-refresh portfolio data every 30 seconds
   useEffect(() => {
-    if (!isPaperMode || !user) return;
+    // UPDATED: Now only depends on the user
+    if (!user) return; 
 
     const interval = setInterval(() => {
       fetchPortfolio();
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-  }, [isPaperMode, user]);
+  }, [user]); // UPDATED: Dependency array changed
 
   // Fetch initial data when user logs in
   useEffect(() => {
-    if (!authLoading && user && isPaperMode) {
+    // UPDATED: Now only depends on user and authLoading
+    if (!authLoading && user) { 
       fetchPortfolio();
       fetchTrades();
     }
-  }, [authLoading, user, isPaperMode]);
+  }, [authLoading, user]); // UPDATED: Dependency array changed
 
   const value = {
     portfolio,
     trades,
     loading,
-    isPaperMode,
+    // isPaperMode, // REMOVED
     fetchPortfolio,
     fetchTrades,
     executeBuyOrder,
     executeSellOrder,
     resetAccount,
-    togglePaperMode,
+    // togglePaperMode, // REMOVED
     getCurrentPrice,
     calculatePositionPnL
   };

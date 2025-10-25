@@ -1,10 +1,19 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+// Import useLocation and useNavigate from react-router-dom
+import { 
+  BrowserRouter as Router, 
+  Routes, 
+  Route, 
+  Navigate, 
+  useLocation, 
+  useNavigate 
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WatchlistProvider } from './contexts/WatchlistContext';
-import { PaperTradingProvider, usePaperTrading } from './contexts/PaperTradingContext';
-import StockChart from './components/StockChart';
-import { useWatchlist } from './contexts/WatchlistContext';
+// usePaperTrading is no longer needed here, but PaperTradingProvider is
+import { PaperTradingProvider } from './contexts/PaperTradingContext';
+// import StockChart from './components/StockChart'; // Unused import
+// import { useWatchlist } from './contexts/WatchlistContext'; // Duplicate/Unused import
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -16,7 +25,7 @@ import SimulationBanner from './components/SimulationBanner';
 import SimulationDashboard from './pages/SimulationDashboard'; // Renamed
 import './App.css';
 
-// Protected Route component
+// Protected Route component (No changes needed)
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
@@ -31,7 +40,7 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" />;
 };
 
-// Public Route component (redirect to dashboard if logged in)
+// Public Route component (No changes needed)
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
@@ -47,22 +56,33 @@ const PublicRoute = ({ children }) => {
 };
 
 // Simulation Banner Wrapper
+// UPDATED to use URL state instead of React state
 const SimulationBannerWrapper = () => {
-  const { isPaperMode, togglePaperMode } = usePaperTrading();
-  const [showBanner, setShowBanner] = React.useState(false);
+  // const { isPaperMode, togglePaperMode } = usePaperTrading(); // REMOVED
+  // const [showBanner, setShowBanner] = React.useState(false); // REMOVED
+  
+  // ADDED hooks to read URL and navigate
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  React.useEffect(() => {
-    setShowBanner(isPaperMode);
-  }, [isPaperMode]);
+  // React.useEffect(() => { // REMOVED
+  //   setShowBanner(isPaperMode);
+  // }, [isPaperMode]);
+
+  // UPDATED: Banner is visible if the URL path is /simulation
+  const isVisible = location.pathname === '/simulation';
 
   const handleClose = () => {
-    setShowBanner(false);
-    togglePaperMode();
+    // setShowBanner(false); // REMOVED
+    // togglePaperMode(); // REMOVED
+    
+    // UPDATED: "Closing" the banner now navigates back to the dashboard
+    navigate('/dashboard');
   };
 
   return (
     <SimulationBanner 
-      isVisible={showBanner} 
+      isVisible={isVisible} // UPDATED
       onClose={handleClose}
     />
   );
@@ -73,7 +93,7 @@ function App() {
     <AuthProvider>
       <WatchlistProvider>
         <PaperTradingProvider>
-          <Router>
+          <Router> {/* Router is here, so SimulationBannerWrapper and Navbar can use hooks */}
             <div className="min-h-screen">
               <SimulationBannerWrapper />
               <Navbar />
@@ -104,14 +124,7 @@ function App() {
                       </ProtectedRoute>
                     } 
                   />
-                  {/* <Route 
-                    path="/paper-trading" 
-                    element={
-                      <ProtectedRoute>
-                        <PaperTradingDashboard />
-                      </ProtectedRoute>
-                    } 
-                  /> */}
+                  {/* Old route is commented out, which is correct */}
                   <Route path="/simulation" element={<ProtectedRoute><SimulationDashboard /></ProtectedRoute>} />
 
                   <Route 
